@@ -1,0 +1,80 @@
+RewriteEngine ON
+#Options All -Indexes
+
+# 1 YEAR
+ExpiresActive On
+<FilesMatch "\.(otf|ico|pdf|flv)$">
+Header set Cache-Control "max-age=31536000, public"
+ExpiresDefault "access plus 1 years"
+Header unset Last-Modified
+Header unset ETag
+SetOutputFilter DEFLATE
+</FilesMatch>
+
+# 1 MONTHS
+<FilesMatch "\.(jpg|jpeg|png|gif|swf)$">
+Header set Cache-Control "max-age=2419200, public"
+ExpiresDefault "access plus 1 month"
+SetOutputFilter DEFLATE
+</FilesMatch>
+
+<FilesMatch "\.(xml|txt|css|js)$">
+Header set Cache-Control "max-age=604800, public"
+ExpiresDefault "access plus 1 week"
+SetOutputFilter DEFLATE
+</FilesMatch>
+ 
+ #30 MIN
+<FilesMatch "\.(html|htm|php)$">
+SetOutputFilter DEFLATE
+</FilesMatch>
+
+<files ~ "^.*\.([Hh][Tt][Aa])">
+order allow,deny
+deny from all
+satisfy all
+</files>
+
+AddType application/x-web-app-manifest+json .webapp
+
+AddDefaultCharset utf-8
+
+Options FollowSymLinks
+
+<IfModule mod_rewrite.c>
+
+    #RewriteEngine On
+
+    # (1)
+    RewriteCond %{HTTPS} =on
+    RewriteRule ^ - [E=PROTO:https]
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ - [E=PROTO:http]
+
+    # (2)
+    # RewriteCond %{HTTPS} !=on
+
+    RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+    RewriteRule ^ %{ENV:PROTO}://%1%{REQUEST_URI} [R=301,L]
+
+</IfModule>
+
+## ROUTER WWW Redirect.
+#RewriteCond %{HTTP_HOST} !^www\. [NC]
+#RewriteRule ^ https://www.%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+## ROUTER HTTPS Redirect
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+
+# Redirecionar para HTTPS WC
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ROUTER URL Rewrite
+RewriteCond %{SCRIPT_FILENAME} !-f
+RewriteCond %{SCRIPT_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?route=/$1 [L,QSA]
